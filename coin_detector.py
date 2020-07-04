@@ -3,21 +3,25 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def image_processing(img_path):
+def image_processing(img_path: str, value: float, currency: str, scale: int, flip: str):
+    """ Called in the GUI file. Contains all other functions """
+
     def nothing(x):
         pass
 
-    def filter_image(img_path: str, scale_percent: int, rotate_img: bool):
+    def filter_image(img_path: str, flip_img=flip):
         """ Getting, resizing and filtering the image """
 
         img = cv2.imread(img_path)
-        if rotate_img == True:
+
+        if flip_img == "Yes":
             img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
         else:
             pass
+
         filter_image.img = img.copy()
-        height = int(img.shape[0] * scale_percent / 100)
-        width = int(img.shape[1] * scale_percent / 100)
+        height = int(img.shape[0] * scale / 100)
+        width = int(img.shape[1] * scale / 100)
         dimetions = (width, height)
         filter_image.resized_img = cv2.resize(img, dimetions, interpolation=cv2.INTER_AREA)
         gray = cv2.cvtColor(filter_image.resized_img, cv2.COLOR_BGR2GRAY)
@@ -29,6 +33,7 @@ def image_processing(img_path):
         """ Detects and draws the circles on the image.
         Prints the number of the detected coins """
         
+        font = cv2.FONT_HERSHEY_SIMPLEX
 
         if coins is not None:
             # ===== Casting to normal ints =====
@@ -38,13 +43,15 @@ def image_processing(img_path):
             for coin in np.asarray(detected_coins[0, :]):
                 cv2.circle(filter_image.resized_img, (coin[0], coin[1]), coin[2], (0, 255, 0), 2)
                 cv2.circle(filter_image.resized_img, (coin[0], coin[1]), 2, (255, 000, 0), 3)
-
-            x = [(len(i)) for i in detected_coins]
-            print("You have {value} {currency}".format(value=value_of_coin*x[0], currency=currency))
-
-        else:
-            print("You have no coins :(")
             
+            x = [(len(i)) for i in detected_coins]
+
+            cv2.putText(img, "You have {value} {currency}".format(value=int(value_of_coin*x[0]), currency=currency), 
+                                                                                (int(img.shape[1] - (img.shape[1]-10)), int(img.shape[0] - (img.shape[0]-30))), 
+                                                                                    font, 1, (0, 255, 0), 3, cv2.LINE_AA)
+        else:
+            cv2.putText(img, "You have 0 {currency}".format(currency=currency), (int(img.shape[1] - (img.shape[1]-10)), int(img.shape[0] - (img.shape[0]-30))), 
+                                                                                    font, 1, (0, 255, 0), 3, cv2.LINE_AA)      
         return True
         
     # ===== Creating the windows =====
@@ -55,7 +62,7 @@ def image_processing(img_path):
     cv2.createTrackbar("max_rad_slider", "Coin Detection", 90, 255, nothing)
 
     while True:
-        filter_image(img_path, 30, True)
+        filter_image(img_path, flip)
 
         # ===== Keeps constant track of the sliders =====
         param1_slider_value = int(cv2.getTrackbarPos("param1_slider", "Coin Detection"))
@@ -93,10 +100,6 @@ def image_processing(img_path):
             cv2.imshow("Coin Detection", filter_image.resized_img)
 
         if max_rad_lastvalue != max_rad_slider_value:
-            # if max_rad_slider_value <= 3:
-            #     max_rad_slider_value = 4
-            #     cv2.createTrackbar("max_rad_slider", "Coin Detection", 90, 255, nothing)
-            # else:
                 max_rad_lastvalue = max_rad_slider_value
                 cv2.imshow("Coin Detection", filter_image.resized_img)
 
@@ -104,7 +107,7 @@ def image_processing(img_path):
                                 param2=int(param2_slider_value),
                                 minRadius=int(min_rad_slider_value), maxRadius=int(max_rad_slider_value))
 
-        detect_coins(coins, filter_image.resized_img, 2, "BGN")
+        detect_coins(coins, filter_image.resized_img, value, currency)
 
         cv2.imshow("Coin Detection", filter_image.resized_img)
         key = cv2.waitKey(1)
