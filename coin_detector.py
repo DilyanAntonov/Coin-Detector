@@ -1,115 +1,86 @@
+from tkinter import *
 import cv2
-import numpy as np
-import matplotlib.pyplot as plt
+from PIL import Image, ImageTk
+from tkinter import filedialog
+from functions import *
 
 
-def image_processing(img_path: str, value: float, currency: str, scale: int, flip: str):
-    """ Called in the GUI file. Contains all other functions """
+def select_image():
+    """Selects the image. Used as a command on a button."""
 
-    def nothing(x):
-        pass
+    select_image.path = filedialog.askopenfilename(filetypes=[("Image File",'.jpg')])
+    select_image.img = Image.open(select_image.path)
+    select_image.tkimage = ImageTk.PhotoImage(select_image.img)
+    return select_image.path
 
-    def filter_image(img_path: str, flip_img=flip):
-        """ Getting, resizing and filtering the image """
+window = Tk()  
+window.geometry("500x250")  
+window.title("Coin Detection")
+font = ("Courier", 20)
 
-        img = cv2.imread(img_path)
 
-        if flip_img == "Yes":
-            img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
-        else:
-            pass
+# ===== Labels =====
+label1 = Label(window, text="Worth of a coin ")
+label1.config(font=font)
+label1.grid(row=1, column=0)
 
-        filter_image.img = img.copy()
-        height = int(img.shape[0] * scale / 100)
-        width = int(img.shape[1] * scale / 100)
-        dimetions = (width, height)
-        filter_image.resized_img = cv2.resize(img, dimetions, interpolation=cv2.INTER_AREA)
-        gray = cv2.cvtColor(filter_image.resized_img, cv2.COLOR_BGR2GRAY)
-        filter_image.blurred_img = cv2.GaussianBlur(gray, (3, 199), cv2.BORDER_DEFAULT)
+label2 = Label(window, text="Scale ")
+label2.config(font=font)
+label2.grid(row=2, column=0)
 
-        return True
+label3 = Label(window, text="Flip Image ")
+label3.config(font=font)
+label3.grid(row=3, column=0)
 
-    def detect_coins(coins, img, value_of_coin, currency):
-        """ Detects and draws the circles on the image.
-        Prints the number of the detected coins """
-        
-        font = cv2.FONT_HERSHEY_SIMPLEX
 
-        if coins is not None:
-            # ===== Casting to normal ints =====
-            detected_coins = np.uint16(np.round(coins))
-            
-            # ===== Drawing the circles =====
-            for coin in np.asarray(detected_coins[0, :]):
-                cv2.circle(filter_image.resized_img, (coin[0], coin[1]), coin[2], (0, 255, 0), 2)
-                cv2.circle(filter_image.resized_img, (coin[0], coin[1]), 2, (255, 000, 0), 3)
-            
-            x = [(len(i)) for i in detected_coins]
+# ===== Dropdown Menus =====
+value_options = ["1", "2", "0.50", "0.25", "0.20", "0.10", "0.05", "0.02", "0.01"]
+currency_options = ["EUR", "USD", "BGN", "JPY"]
+scale_options = ["90%", "80%", "70%", "60%", "50%", "40%", "30%", "20%", "10%"]
+flip_options = ["Yes", "No"]
 
-            cv2.putText(img, "You have {value} {currency}".format(value=int(value_of_coin*x[0]), currency=currency), 
-                                                                                (int(img.shape[1] - (img.shape[1]-10)), int(img.shape[0] - (img.shape[0]-30))), 
-                                                                                    font, 1, (0, 255, 0), 3, cv2.LINE_AA)
-        else:
-            cv2.putText(img, "You have 0 {currency}".format(currency=currency), (int(img.shape[1] - (img.shape[1]-10)), int(img.shape[0] - (img.shape[0]-30))), 
-                                                                                    font, 1, (0, 255, 0), 3, cv2.LINE_AA)      
-        return True
-        
-    # ===== Creating the windows =====
-    cv2.namedWindow("Coin Detection")
-    cv2.createTrackbar("param1_slider", "Coin Detection", 50, 255, nothing)
-    cv2.createTrackbar("param2_slider", "Coin Detection", 30, 255, nothing)
-    cv2.createTrackbar("min_rad_slider", "Coin Detection", 0, 255, nothing)
-    cv2.createTrackbar("max_rad_slider", "Coin Detection", 90, 255, nothing)
+value_first_option = StringVar(window) # Used to retrieve the selected value
+value_first_option.set(value_options[0])
 
-    while True:
-        filter_image(img_path, flip)
+currency_first_option = StringVar(window) # Used to retrieve the selected value
+currency_first_option.set(currency_options[0])
 
-        # ===== Keeps constant track of the sliders =====
-        param1_slider_value = int(cv2.getTrackbarPos("param1_slider", "Coin Detection"))
-        param2_slider_value = int(cv2.getTrackbarPos("param2_slider", "Coin Detection"))
-        param1_lastvalue = 0
-        param2_lastvalue = 0
+scale_first_option = StringVar(window) # Used to retrieve the selected value
+scale_first_option.set(scale_options[5])
 
-        min_rad_slider_value = int(cv2.getTrackbarPos("min_rad_slider", "Coin Detection"))
-        max_rad_slider_value = int(cv2.getTrackbarPos("max_rad_slider", "Coin Detection"))
-        min_rad_lastvalue = 0
-        max_rad_lastvalue = 0
+flip_first_option = StringVar(window)
+flip_first_option.set(flip_options[0])
 
-        # ===== Edge Cases =====
-        """ There is no way to set a minimum in the slider, but
-        if the value goes to 0 the HoughCircle function breaks """
 
-        if param1_lastvalue != param1_slider_value:
-            if param1_slider_value <= 3:
-                param1_slider_value = 10
-                cv2.createTrackbar("param1_slider", "Coin Detection", 10, 255, nothing)
-            else:
-                param1_lastvalue = param1_slider_value
-                cv2.imshow("Coin Detection", filter_image.resized_img)
-                
-        if param2_lastvalue != param2_slider_value:
-            if param2_slider_value <= 3:
-                param2_slider_value = 10
-                cv2.createTrackbar("param2_slider", "Coin Detection", 10, 255, nothing)
-            else:
-                param2_lastvalue = param2_slider_value
-                cv2.imshow("Coin Detection", filter_image.resized_img)
-        
-        if min_rad_lastvalue != min_rad_slider_value:
-            min_rad_lastvalue = min_rad_slider_value
-            cv2.imshow("Coin Detection", filter_image.resized_img)
+value_dropdown = OptionMenu(window, value_first_option, *value_options)
+value_dropdown.config(width=3, font=font)
+value_dropdown.grid(row=1, column=1)
 
-        if max_rad_lastvalue != max_rad_slider_value:
-                max_rad_lastvalue = max_rad_slider_value
-                cv2.imshow("Coin Detection", filter_image.resized_img)
+currency_dropdown = OptionMenu(window, currency_first_option, *currency_options)
+currency_dropdown.config(width=3, font=font)
+currency_dropdown.grid(row=1, column=2)
 
-        coins = cv2.HoughCircles(filter_image.blurred_img , cv2.HOUGH_GRADIENT, 1, 20, param1=int(param1_slider_value),
-                                param2=int(param2_slider_value),
-                                minRadius=int(min_rad_slider_value), maxRadius=int(max_rad_slider_value))
+scale_dropdown = OptionMenu(window, scale_first_option, *scale_options)
+scale_dropdown.config(width=3, font=font)
+scale_dropdown.grid(row=2, column=1)
 
-        detect_coins(coins, filter_image.resized_img, value, currency)
+flip_dropdown = OptionMenu(window, flip_first_option, *flip_options)
+flip_dropdown.config(width=3, font=font)
+flip_dropdown.grid(row=3, column=1)
 
-        cv2.imshow("Coin Detection", filter_image.resized_img)
-        key = cv2.waitKey(1)
-        if key == 27:
-            break
+
+# ===== Buttons =====
+button1 = Button(window, text = "Calculate", command = lambda: image_processing(img_path=select_image.path,
+                                                                                value=float(value_first_option.get()),
+                                                                                currency=currency_first_option.get(),
+                                                                                scale=int(scale_first_option.get()[0:2]),
+                                                                                flip=str(flip_first_option.get())))
+                                                
+button1.config(width=13, font=font)
+button1.grid(row=5, column=0)
+
+button2 = Button(window, text = "Select Image", command = select_image)
+button2.config(width=13, font=font)
+button2.grid(row=4, column=0)
+
+window.mainloop()
