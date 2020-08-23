@@ -11,6 +11,7 @@ def select_image():
     select_image.path = filedialog.askopenfilename(filetypes=[("Image File",'.jpg')])
     select_image.img = Image.open(select_image.path)
     select_image.tkimage = ImageTk.PhotoImage(select_image.img)
+
     return select_image.path
 
 window = Tk()  

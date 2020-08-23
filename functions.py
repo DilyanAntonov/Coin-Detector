@@ -1,14 +1,39 @@
 import cv2
 import numpy as np
 
-def image_processing(img_path: str, value: float, currency: str, scale: int, flip: str):
-    """ Called in the GUI file. Contains all other functions """
 
-    def nothing(x):
+def image_processing(img_path: str, value: float, currency: str, scale: int, flip="Yes"):
+    """ 
+    Contains the whole 'backend' of the program. Directly called in the coin_detector.py file (GUI)
+    
+    Parameters:
+    img_path (str): The path to the image file. Selected from the GUI
+
+    value (float): The value of the coin. Selected from the GUI
+
+    currency (str): The name of the currency of the coins. Selected from the GUI
+
+    scale (str): The scale to shrink the image. Selected from the GUI
+
+    flip (str): Shows if the image has to be flipped horizontally 90 degrees or not. Selected from the GUI
+    """
+
+    def nothing():
+        '''
+        Needed for the createTrackbar function from OpenCV
+        '''
         pass
+    
 
     def filter_image(img_path: str, flip_img=flip):
-        """ Getting, resizing and filtering the image """
+        """ 
+        Obtaining, resizing and filtering the image
+
+        Parameters:
+        img_path (str): The path to the image file.
+
+        flip_img (str): Uses the flip parameter from the image_processing() function
+        """
 
         img = cv2.imread(img_path)
 
@@ -27,9 +52,23 @@ def image_processing(img_path: str, value: float, currency: str, scale: int, fli
 
         return True
 
+
     def detect_coins(coins, img, value_of_coin, currency):
-        """ Detects and draws the circles on the image.
-        Prints the number of the detected coins """
+        """ 
+        Detects the circles on the image.
+        Shows each one individually with a green outline.
+        Shows in the popup window the amount of coins detected and their currency.
+
+        Parameters:
+        coins (numpy.ndarray): Created using the HoughCircles function from OpenCV. 
+                               Contains the data for each detected coins.
+        
+        img (function): Contains the processed image from the filter_image() function.
+
+        value_of_coin (float): Contains the value of each coin.
+
+        currency (str): Contains the currency of the coins.
+        """
         
         font = cv2.FONT_HERSHEY_SIMPLEX
 
